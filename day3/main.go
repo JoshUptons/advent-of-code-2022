@@ -18,9 +18,9 @@ func contains(a byte, b []byte) bool {
 
 func Value(a int) int {
 	if a <= int(rune('Z')) {
-		return a - int(rune('A')) + 27
+		return a - int('A') + 27
 	}
-	return a - int(rune('a')) + 1
+	return a - int('a') + 1
 }
 
 func main() {
@@ -38,7 +38,7 @@ func main() {
 
 	for fileScanner.Scan() {
 		line := fileScanner.Bytes()
-		left := line[0 : len(line)/2-1]
+		left := line[0 : len(line)/2]
 		right := line[len(line)/2:]
 		for i := 0; i < len(left); i++ {
 			if contains(left[i], right) {
