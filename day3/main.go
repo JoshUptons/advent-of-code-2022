@@ -1,15 +1,25 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
+	"io/ioutil"
 	"log"
-	"os"
+	"strings"
 )
 
-func contains(a byte, b []byte) bool {
-	for _, n := range b {
-		if n == a {
+func getCommon(batch [][]byte) int {
+
+	for i := 0; i < len(batch[0]); i++ {
+		if foundIn(batch[1], batch[0][i]) && foundIn(batch[2], batch[0][i]) {
+			return int(batch[0][i])
+		}
+	}
+	return -1
+}
+
+func foundIn(data []byte, b byte) bool {
+	for _, i := range data {
+		if i == b {
 			return true
 		}
 	}
@@ -17,36 +27,27 @@ func contains(a byte, b []byte) bool {
 }
 
 func Value(a int) int {
-	if a <= int(rune('Z')) {
+	if a <= int('Z') {
 		return a - int('A') + 27
 	}
 	return a - int('a') + 1
 }
 
 func main() {
-	file, err := os.Open("input.txt")
+	file, err := ioutil.ReadFile("input.txt")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("error reading file, %v", err)
 	}
-
-	defer file.Close()
-
-	fileScanner := bufio.NewScanner(file)
-	fileScanner.Split(bufio.ScanLines)
 
 	sum := 0
-
-	for fileScanner.Scan() {
-		line := fileScanner.Bytes()
-		left := line[0 : len(line)/2]
-		right := line[len(line)/2:]
-		for i := 0; i < len(left); i++ {
-			if contains(left[i], right) {
-				sum += Value(int(left[i]))
-				break
-			}
+	lines := strings.Split(string(file), "\n")
+	for i := 0; i < len(lines)-1; i += 3 {
+		batch := [][]byte{[]byte(lines[i]), []byte(lines[i+1]), []byte(lines[i+2])}
+		badge := getCommon(batch)
+		if badge == -1 {
+			continue
 		}
+		sum += Value(badge)
 	}
-
 	fmt.Println(sum)
 }
