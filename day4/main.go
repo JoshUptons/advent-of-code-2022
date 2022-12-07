@@ -9,16 +9,10 @@ import (
 	"strings"
 )
 
-func overlap(a []int, b []int) bool {
-	if (a[0] <= b[0] && a[1] >= b[1]) || (b[0] <= a[0] && b[1] >= a[1]) {
-		fmt.Println(a, b)
-		return true
-	}
-	return false
-}
-
 func handleErr(err error) {
-	log.Fatal(err)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func main() {
@@ -35,34 +29,31 @@ func main() {
 	for lineScanner.Scan() {
 		line := lineScanner.Text()
 
-		arr1 := strings.Split(strings.Split(line, ",")[0], "-")
-		arr2 := strings.Split(strings.Split(line, ",")[1], "-")
+		elves := [][]int{}
 
-		i, err := strconv.Atoi(arr1[0])
-		if err != nil {
-			handleErr(err)
+		for _, elf := range strings.Split(line, ",") {
+			sections := []int{}
+			for _, s := range strings.Split(elf, "-") {
+				n, err := strconv.Atoi(s)
+				handleErr(err)
+				sections = append(sections, n)
+			}
+			elves = append(elves, sections)
 		}
 
-		i2, err := strconv.Atoi(arr1[1])
-		if err != nil {
-			handleErr(err)
+		overlap := false
+		for i, n := range elves[0] {
+			if n >= elves[1][0] && n <= elves[1][1] {
+				overlap = true
+			}
+			if elves[1][i] >= elves[0][0] && elves[1][i] <= elves[0][i] {
+				overlap = true
+			}
 		}
-
-		i3, err := strconv.Atoi(arr2[0])
-		if err != nil {
-			handleErr(err)
-		}
-
-		i4, err := strconv.Atoi(arr2[1])
-		if err != nil {
-			handleErr(err)
-		}
-
-		if overlap([]int{i, i2}, []int{i3, i4}) {
+		if overlap {
 			sum++
 		}
 
 	}
-
-	fmt.Println(sum)
+	fmt.Println(sum, "overlaps")
 }
