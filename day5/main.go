@@ -67,7 +67,21 @@ func parseStacks(lines []string) map[int][]string {
 	return stacks
 }
 
-func moveCrates(s *map[int][]string, move Move) bool {
+func moveCratesPart2(s *map[int][]string, move Move) bool {
+	if len((*s)[move.From]) < move.Amount {
+		return false
+	}
+
+	crates := (*s)[move.From][:move.Amount]
+	fmt.Printf("moving %v crates from %d to %d\n", crates, move.From, move.To)
+	(*s)[move.From] = append([]string{}, (*s)[move.From][move.Amount:]...)
+	crates = append(crates, (*s)[move.To]...)
+	(*s)[move.To] = crates
+
+	return true
+}
+
+func moveCratesPart1(s *map[int][]string, move Move) bool {
 	if len((*s)[move.From]) < move.Amount {
 		return false
 	}
@@ -98,9 +112,9 @@ func main() {
 	stacks := parseStacks(lines)
 	moves := parseMoves(lines)
 
-	for i, move := range moves {
-		move.log(i)
-		ok := moveCrates(&stacks, move)
+	for _, move := range moves {
+		//move.log(i)
+		ok := moveCratesPart2(&stacks, move)
 		if !ok {
 			fmt.Println("Error completing move")
 			os.Exit(1)
