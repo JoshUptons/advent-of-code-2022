@@ -98,9 +98,6 @@ func main() {
 	stacks := parseStacks(lines)
 	moves := parseMoves(lines)
 
-	fmt.Println(stacks)
-	fmt.Println(moves)
-
 	for i, move := range moves {
 		move.log(i)
 		ok := moveCrates(&stacks, move)
@@ -110,7 +107,6 @@ func main() {
 		}
 	}
 
-	fmt.Println(stacks)
 	fmt.Println(getTopCrates(stacks))
 
 }
