@@ -15,19 +15,20 @@ func handleErr(err error) {
 
 func uniqueBytes(stack []byte) bool {
 
-	for i := 0; i < len(stack); i++ {
-		for j := 0; j < len(stack); j++ {
-			if i == j {
-				continue
-			}
-			if stack[i] == stack[j] {
-				return false
-			}
+	m := make(map[byte]bool)
+
+	for _, b := range stack {
+		if _, ok := m[b]; !ok {
+			m[b] = true
+		} else {
+			return false
 		}
 	}
 
 	return true
 }
+
+type stack []byte
 
 func main() {
 
@@ -39,18 +40,12 @@ func main() {
 	b, err := ioutil.ReadAll(file)
 	handleErr(err)
 
-	stack := make([]byte, 4)
-
-	for i := 0; i < len(b); i++ {
-		stack[0] = b[i]
-		stack[1] = b[i+1]
-		stack[2] = b[i+2]
-		stack[3] = b[i+3]
-		if uniqueBytes(stack) {
-			fmt.Println(stack)
-			fmt.Printf("%d characters before finding a unique sequence", i+4)
+	for i := 0; i < len(b)-13; i++ {
+		start := i
+		end := i + 14
+		if uniqueBytes(b[start:end]) {
+			fmt.Printf("found unique sequence after %d characters read\n", i+14)
 			break
 		}
 	}
-
 }
