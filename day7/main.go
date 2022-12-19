@@ -10,14 +10,16 @@ import (
 )
 
 const (
-	DIR     string = "dir"
-	FILE           = "FILE"
-	COMMAND        = "$"
-	LS             = "ls"
-	CD             = "cd"
-	UPDIR          = ".."
-	ROOT           = "/"
-	MAX     int    = 100000
+	DIR         string = "dir"
+	FILE               = "FILE"
+	COMMAND            = "$"
+	LS                 = "ls"
+	CD                 = "cd"
+	UPDIR              = ".."
+	ROOT               = "/"
+	MAX         int    = 100000
+	SYSTEM_SIZE        = 70000000
+	MIN_UNUSED         = 30000000
 )
 
 type FileTree struct {
@@ -182,13 +184,23 @@ func main() {
 		}
 	}
 
-	totalBytes := 0
+	currUnused := SYSTEM_SIZE - ft.Root.Size
+	spaceNeeded := MIN_UNUSED % currUnused
+
+	var smallestDir *Directory
+
 	for _, dir := range ft.Directories {
-		if dir.isBelowAmount(MAX) {
-			fmt.Printf("%s was below the amount with %d bytes\n", dir.Name, dir.Size)
-			totalBytes += dir.Size
+		if dir.Size >= spaceNeeded {
+			if smallestDir == nil {
+				smallestDir = dir
+				continue
+			}
+			if dir.Size < smallestDir.Size {
+				smallestDir = dir
+			}
 		}
 	}
-	fmt.Printf("%d bytes ready to be deleted\n", totalBytes)
+
+	fmt.Println("smallest dir is:", smallestDir.Name, smallestDir.Size)
 
 }
