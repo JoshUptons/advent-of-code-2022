@@ -14,11 +14,16 @@ func handleErr(err error) {
 }
 
 type tree struct {
-	value   int
-	visible bool
+	value    int
+	visible  bool
+	position struct {
+		x int
+		y int
+	}
 }
 
 func main() {
+	//file, err := os.ReadFile("input.txt")
 	file, err := os.ReadFile("input.txt")
 	handleErr(err)
 
@@ -26,97 +31,76 @@ func main() {
 
 	grid := map[int][]tree{}
 
-	for i := 0; i < len(stringLines)-1; i++ {
-		line := strings.Split(stringLines[i], "")
-		for j := 0; j < len(line); j++ {
-			n, err := strconv.Atoi(line[j])
-			handleErr(err)
-			grid[i] = append(grid[i], tree{n, false})
-		}
+	// for each tree, calculate the viewing score of each tree
+	// view score is calculated by multiplying each distance that the tree can see
 
+	for i := 0; i < len(stringLines); i++ {
+		trees := strings.Split(stringLines[i], "")
+		for j := 0; j < len(trees); j++ {
+			n, err := strconv.Atoi(trees[j])
+			handleErr(err)
+			grid[i] = append(grid[i], tree{n, false, struct {
+				x int
+				y int
+			}{j, i}})
+		}
 	}
 
-	totalTreesVisible := 0
+	highestViewScore := 0
+	viewTree := &tree{}
 
-	var (
-		maxLeft   int = -1
-		maxRight      = -1
-		maxBottom     = -1
-		maxTop        = -1
-	)
-
-	for i := 0; i < len(grid); i++ {
-
-		maxRight = -1
-		maxLeft = -1
-
-		/*
-			left and right
-			unfortunately cannot utilize additional pointers for top and bottom
-			here, as in order to reset the maxBottom and maxTop, we would need
-			to do it per column checked, which would not hold value correctly
-			per iteration.
-		*/
-		for j := 0; j < len(grid[i]); j++ {
+	for i := 1; i <= len(grid)-2; i++ {
+		for j := 1; j <= len(grid[i])-2; j++ {
 
 			var (
-				fromLeft  *tree = &grid[i][j]
-				fromRight       = &grid[i][len(grid[i])-j-1]
+				t     *tree = &grid[i][j]
+				up    int   = 0
+				right       = 0
+				down        = 0
+				left        = 0
 			)
 
-			if fromLeft.value > maxLeft {
-				maxLeft = fromLeft.value
-				if !fromLeft.visible {
-					fromLeft.visible = true
-					totalTreesVisible++
+			// look up
+			for n := i - 1; n >= 0; n-- {
+				up++
+				if t.value == grid[n][j].value {
+					break
 				}
 			}
 
-			if fromRight.value > maxRight {
-				maxRight = fromRight.value
-				if !fromRight.visible {
-					fromRight.visible = true
-					totalTreesVisible++
+			// look right
+			for n := j + 1; n <= len(grid[i])-1; n++ {
+				right++
+				if t.value <= grid[i][n].value {
+					break
 				}
+			}
+
+			// look down
+			for n := i + 1; n <= len(grid)-1; n++ {
+				down++
+				if t.value <= grid[n][j].value {
+					break
+				}
+			}
+
+			// look left
+			for n := j - 1; n >= 0; n-- {
+				left++
+				if t.value <= grid[i][n].value {
+					break
+				}
+			}
+
+			calc := up * down * left * right
+			if calc > highestViewScore {
+				highestViewScore = calc
+				viewTree = &grid[i][j]
 			}
 
 		}
-		/*
-			top and bottom
-		*/
-		for col := 0; col < len(grid[0]); col++ {
-			maxTop = -1
-			maxBottom = -1
-			for row := 0; row < len(grid); row++ {
-				var (
-					fromTop    *tree = &grid[row][col]
-					fromBottom       = &grid[len(grid)-1-row][col]
-				)
-
-				if fromTop.value > maxTop {
-					maxTop = fromTop.value
-					if !fromTop.visible {
-						fromTop.visible = true
-						totalTreesVisible++
-					}
-				}
-
-				if fromBottom.value > maxBottom {
-					maxBottom = fromBottom.value
-					if !fromBottom.visible {
-						fromBottom.visible = true
-						totalTreesVisible++
-					}
-				}
-			}
-		}
-
 	}
 
-	for i := 0; i < len(grid); i++ {
-		fmt.Println(grid[i])
-	}
-
-	fmt.Printf("total trees visible: %d\n", totalTreesVisible)
+	fmt.Printf("highest score tree at grid: [%d, %d], value: %d\nview score: %d\n", viewTree.position.x, viewTree.position.y, viewTree.value, highestViewScore)
 
 }
