@@ -25,6 +25,13 @@ var (
 	}
 )
 
+type Node struct {
+	x    int
+	y    int
+	seen bool
+	key  string
+}
+
 type Path struct {
 	nodes       map[string]*Node
 	head        *Node
@@ -36,7 +43,8 @@ func (p *Path) init() {
 	p.nodes = make(map[string]*Node)
 	p.head = p.add(0, 0)
 	p.tail = p.head
-	p.uniqueNodes = 0
+	p.tail.seen = true
+	p.uniqueNodes = 1
 }
 
 func (p *Path) print() {
@@ -127,13 +135,6 @@ func (p *Path) step(dir int) {
 
 func createKey(x, y int) string {
 	return fmt.Sprint(x, "", y)
-}
-
-type Node struct {
-	x    int
-	y    int
-	seen bool
-	key  string
 }
 
 func handleErr(err error) {
