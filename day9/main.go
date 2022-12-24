@@ -9,138 +9,45 @@ import (
 	"strings"
 )
 
-const (
-	UP    int = 0
-	RIGHT     = 1
-	DOWN      = 2
-	LEFT      = 3
-)
-
-var (
-	directions map[string]int = map[string]int{
-		"U": 0,
-		"R": 1,
-		"D": 2,
-		"L": 3,
-	}
-)
-
-type Node struct {
-	x    int
-	y    int
-	seen bool
-	key  string
-}
-
-type Path struct {
-	nodes       map[string]*Node
-	head        *Node
-	tail        *Node
-	uniqueNodes int
-}
-
-func (p *Path) init() {
-	p.nodes = make(map[string]*Node)
-	p.head = p.add(0, 0)
-	p.tail = p.head
-	p.tail.seen = true
-	p.uniqueNodes = 1
-}
-
-func (p *Path) print() {
-	fmt.Println("head", p.head)
-	fmt.Println("tail", p.tail)
-	fmt.Println("current unique nodes seen: ", p.uniqueNodes)
-}
-
-func (p *Path) add(x, y int) *Node {
-	key := createKey(x, y)
-	newNode := &Node{x, y, false, key}
-	p.nodes[key] = newNode
-	return newNode
-}
-
-func (p *Path) moveTail() {
-	p.tail = p.head
-}
-
-func (p *Path) keyExists(key string) bool {
-	_, ok := p.nodes[key]
-	return ok
-}
-
-func (p *Path) seeTail() {
-	p.tail.seen = true
-	p.uniqueNodes++
-}
-
-func (p *Path) step(dir int) {
-	switch dir {
-	case UP:
-		if p.head.y+1 > p.tail.y+1 {
-			p.moveTail()
-		}
-		key := createKey(p.head.x, p.head.y+1)
-		if !p.keyExists(key) {
-			p.head = p.add(p.head.x, p.head.y+1)
-		} else {
-			p.head = p.nodes[key]
-		}
-		break
-
-	case DOWN:
-		if p.head.y-1 < p.tail.y-1 {
-			p.moveTail()
-		}
-		key := createKey(p.head.x, p.head.y-1)
-		if !p.keyExists(key) {
-			p.head = p.add(p.head.x, p.head.y-1)
-		} else {
-			p.head = p.nodes[key]
-		}
-		break
-
-	case RIGHT:
-		if p.head.x+1 > p.tail.x+1 {
-			p.moveTail()
-		}
-		key := createKey(p.head.x+1, p.head.y)
-		if !p.keyExists(key) {
-			p.head = p.add(p.head.x+1, p.head.y)
-		} else {
-			p.head = p.nodes[key]
-		}
-		break
-
-	case LEFT:
-		if p.head.x-1 < p.tail.x-1 {
-			p.moveTail()
-		}
-		key := createKey(p.head.x-1, p.head.y)
-		if !p.keyExists(key) {
-			p.head = p.add(p.head.x-1, p.head.y)
-		} else {
-			p.head = p.nodes[key]
-		}
-		break
-
-	default:
-		log.Fatal("invalid direction provided")
-	}
-
-	if !p.tail.seen {
-		p.seeTail()
-	}
-}
-
-func createKey(x, y int) string {
-	return fmt.Sprint(x, "", y)
+type Knot struct {
+	x int
+	y int
 }
 
 func handleErr(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func parseLine(line string) (string, int) {
+
+	arr := strings.Split(line, " ")
+
+	val, err := strconv.Atoi(arr[1])
+	handleErr(err)
+
+	return arr[0], val
+
+}
+
+func abs(n int) int {
+	if n < 0 {
+		n = -n
+	}
+	return n
+}
+
+func createKey(tail Knot) string {
+	return fmt.Sprint(tail.x, "", tail.y)
+}
+
+func keyCheck(tail Knot, grid map[string]bool) {
+	key := createKey(tail)
+	if _, ok := grid[key]; !ok {
+		grid[key] = true
+	}
+
 }
 
 func main() {
@@ -150,25 +57,95 @@ func main() {
 
 	defer file.Close()
 
-	p := Path{}
-	p.init()
 	lineScanner := bufio.NewScanner(file)
+
+	grid := map[string]bool{}
+	head := Knot{100000, 100000}
+	tail := Knot{100000, 100000}
+	grid["100000100000"] = true
 
 	for lineScanner.Scan() {
 		text := lineScanner.Text()
 
-		arr := strings.Split(text, " ")
-
-		direction := directions[arr[0]]
-		distance, err := strconv.Atoi(arr[1])
-		handleErr(err)
+		direction, distance := parseLine(text)
 
 		for i := 0; i < distance; i++ {
-			p.step(direction)
+			switch direction {
+			case "U":
+				fmt.Printf("moving head UP to [%d, %d]\n", head.x, head.y+1)
+				head.y++
+				fmt.Printf("checking the distance between head and tail\n")
+
+				if head.y-tail.y > 1 {
+					fmt.Printf("distance between tail[%d, %d] and head[%d, %d], was greater than 1\nmoving tail\n", tail.x, tail.y, head.x, head.y)
+					tail.y++
+					tail.x = head.x
+					grid[createKey(tail)] = true
+					fmt.Println("unique points visited by tail:", len(grid))
+
+				} else {
+					fmt.Println("the distance was not greater than 1")
+
+				}
+				break
+
+			case "R":
+				fmt.Printf("moving head RIGHT to [%d, %d]\n", head.x+1, head.y)
+				head.x++
+
+				if head.x-tail.x > 1 {
+					fmt.Printf("distance between tail[%d, %d] and head[%d, %d], was greater than 1\nmoving tail\n", tail.x, tail.y, head.x, head.y)
+					tail.x++
+					tail.y = head.y
+					grid[createKey(tail)] = true
+					fmt.Println("unique points visited by tail:", len(grid))
+
+				} else {
+					fmt.Println("the distance was not greater than 1")
+
+				}
+				break
+
+			case "D":
+				fmt.Printf("moving head DOWN to [%d, %d]\n", head.x, head.y-1)
+				head.y--
+
+				if tail.y-head.y > 1 {
+					fmt.Printf("distance between tail[%d, %d] and head[%d, %d], was greater than 1\nmoving tail\n", tail.x, tail.y, head.x, head.y)
+					tail.y--
+					tail.x = head.x
+					grid[createKey(tail)] = true
+					fmt.Println("unique points visited by tail:", len(grid))
+
+				} else {
+					fmt.Println("the distance was not greater than 1")
+
+				}
+				break
+
+			case "L":
+				fmt.Printf("moving head LEFT to [%d, %d]\n", head.x-1, head.y)
+				head.x--
+
+				if tail.x-head.x > 1 {
+					fmt.Printf("distance between tail[%d, %d] and head[%d, %d], was greater than 1\nmoving tail\n", tail.x, tail.y, head.x, head.y)
+					tail.x--
+					tail.y = head.y
+					grid[createKey(tail)] = true
+					fmt.Println("unique points visited by tail:", len(grid))
+
+				} else {
+					fmt.Println("the distance was not greater than 1")
+
+				}
+				break
+
+			}
+			fmt.Println()
 		}
 
 	}
 
-	fmt.Println(p.uniqueNodes)
+	fmt.Printf("total points tail has visited: %d\n", len(grid))
 
 }
