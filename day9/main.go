@@ -4,14 +4,103 @@ import (
 	"bufio"
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"strconv"
 	"strings"
 )
 
+const (
+	UP    int = 0
+	RIGHT     = 1
+	DOWN      = 2
+	LEFT      = 3
+)
+
+var (
+	directions map[string]int = map[string]int{
+		"U": 0,
+		"R": 1,
+		"D": 2,
+		"L": 3,
+	}
+)
+
+type Rope struct {
+	Head   *Knot
+	Points map[[2]int]bool
+}
+
+type Point struct {
+	x float64
+	y float64
+}
+
+func (r *Rope) addKnot(p Point) {
+	if r.Head == nil {
+
+		r.Head = &Knot{p, Point{0, 0}, nil}
+
+	} else {
+
+		head := r.Head
+		for head.Next != nil {
+			head = head.Next
+		}
+		head.Next = &Knot{p, Point{0, 0}, nil}
+
+	}
+}
+
 type Knot struct {
-	x int
-	y int
+	Position     Point
+	PrevPosition Point
+	Next         *Knot
+}
+
+func (k *Knot) moveHead(dir int) {
+	k.PrevPosition = k.Position
+	switch dir {
+	case UP:
+		k.Position.y++
+		break
+	case DOWN:
+		k.Position.y--
+		break
+	case LEFT:
+		k.Position.x--
+		break
+	case RIGHT:
+		k.Position.x++
+		break
+	}
+	// fmt.Println("head", k.Position)
+}
+
+func (k *Knot) move(prev *Knot) {
+
+	offsetX := prev.Position.x - k.Position.x
+	offsetY := prev.Position.y - k.Position.y
+
+	if math.Abs(offsetX) > 1 && math.Abs(offsetY) > 1 {
+
+		k.Position.x += offsetX / 2
+		k.Position.y += offsetY / 2
+
+	} else if math.Abs(offsetX) > 1 {
+
+		k.Position.x += offsetX / 2
+		k.Position.y += offsetY
+
+	} else if math.Abs(offsetY) > 1 {
+
+		k.Position.y += offsetY / 2
+		k.Position.x += offsetX
+
+	}
+
+	// fmt.Println(k.Position)
+
 }
 
 func handleErr(err error) {
@@ -31,121 +120,53 @@ func parseLine(line string) (string, int) {
 
 }
 
-func abs(n int) int {
-	if n < 0 {
-		n = -n
-	}
-	return n
-}
-
-func createKey(tail Knot) string {
-	return fmt.Sprint(tail.x, "", tail.y)
-}
-
-func keyCheck(tail Knot, grid map[string]bool) {
-	key := createKey(tail)
-	if _, ok := grid[key]; !ok {
-		grid[key] = true
-	}
-
-}
-
 func main() {
 	file, err := os.Open("input.txt")
 	// file, err := os.Open("sample.txt")
+
 	handleErr(err)
 
 	defer file.Close()
 
 	lineScanner := bufio.NewScanner(file)
 
-	grid := map[string]bool{}
-	head := Knot{100000, 100000}
-	tail := Knot{100000, 100000}
-	grid["100000100000"] = true
-
-	for lineScanner.Scan() {
-		text := lineScanner.Text()
-
-		direction, distance := parseLine(text)
-
-		for i := 0; i < distance; i++ {
-			switch direction {
-			case "U":
-				fmt.Printf("moving head UP to [%d, %d]\n", head.x, head.y+1)
-				head.y++
-				fmt.Printf("checking the distance between head and tail\n")
-
-				if head.y-tail.y > 1 {
-					fmt.Printf("distance between tail[%d, %d] and head[%d, %d], was greater than 1\nmoving tail\n", tail.x, tail.y, head.x, head.y)
-					tail.y++
-					tail.x = head.x
-					grid[createKey(tail)] = true
-					fmt.Println("unique points visited by tail:", len(grid))
-
-				} else {
-					fmt.Println("the distance was not greater than 1")
-
-				}
-				break
-
-			case "R":
-				fmt.Printf("moving head RIGHT to [%d, %d]\n", head.x+1, head.y)
-				head.x++
-
-				if head.x-tail.x > 1 {
-					fmt.Printf("distance between tail[%d, %d] and head[%d, %d], was greater than 1\nmoving tail\n", tail.x, tail.y, head.x, head.y)
-					tail.x++
-					tail.y = head.y
-					grid[createKey(tail)] = true
-					fmt.Println("unique points visited by tail:", len(grid))
-
-				} else {
-					fmt.Println("the distance was not greater than 1")
-
-				}
-				break
-
-			case "D":
-				fmt.Printf("moving head DOWN to [%d, %d]\n", head.x, head.y-1)
-				head.y--
-
-				if tail.y-head.y > 1 {
-					fmt.Printf("distance between tail[%d, %d] and head[%d, %d], was greater than 1\nmoving tail\n", tail.x, tail.y, head.x, head.y)
-					tail.y--
-					tail.x = head.x
-					grid[createKey(tail)] = true
-					fmt.Println("unique points visited by tail:", len(grid))
-
-				} else {
-					fmt.Println("the distance was not greater than 1")
-
-				}
-				break
-
-			case "L":
-				fmt.Printf("moving head LEFT to [%d, %d]\n", head.x-1, head.y)
-				head.x--
-
-				if tail.x-head.x > 1 {
-					fmt.Printf("distance between tail[%d, %d] and head[%d, %d], was greater than 1\nmoving tail\n", tail.x, tail.y, head.x, head.y)
-					tail.x--
-					tail.y = head.y
-					grid[createKey(tail)] = true
-					fmt.Println("unique points visited by tail:", len(grid))
-
-				} else {
-					fmt.Println("the distance was not greater than 1")
-
-				}
-				break
-
-			}
-			fmt.Println()
-		}
-
+	rope := Rope{}
+	for i := 0; i < 10; i++ {
+		rope.addKnot(Point{0, 0})
 	}
 
-	fmt.Printf("total points tail has visited: %d\n", len(grid))
+	rope.Points = map[[2]int]bool{}
+
+	for lineScanner.Scan() {
+
+		text := lineScanner.Text()
+
+		dir, dis := parseLine(text)
+
+		for i := 0; i < dis; i++ {
+
+			curr := rope.Head
+			curr.moveHead(directions[dir])
+			prev := curr
+			curr = curr.Next
+
+			for curr.Next != nil {
+
+				curr.move(prev)
+				prev = curr
+				curr = curr.Next
+
+			}
+
+			curr.move(prev)
+
+			rope.Points[[2]int{int(curr.Position.x), int(curr.Position.y)}] = true
+
+			// fmt.Println()
+
+		}
+	}
+
+	fmt.Println(len(rope.Points), "points visited")
 
 }
